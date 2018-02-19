@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const firebase = require("firebase-functions");
-const { send } = require("micro");
+const { send, json } = require("micro");
 const { upload, move } = require("micro-upload");
 const uploadImageToStorage = require("./upload");
 const endpoint = upload((req, res) => __awaiter(this, void 0, void 0, function* () {
@@ -25,5 +25,5 @@ const endpoint = upload((req, res) => __awaiter(this, void 0, void 0, function* 
     }
 }));
 exports.api = firebase.https.onRequest(endpoint);
-// module.exports = endpoint
+module.exports = endpoint;
 //# sourceMappingURL=index.js.map

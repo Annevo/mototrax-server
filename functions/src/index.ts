@@ -1,5 +1,5 @@
 const firebase = require("firebase-functions")
-const { send } = require("micro")
+const { send, json } = require("micro")
 const { upload, move } = require("micro-upload")
 
 const uploadImageToStorage = require("./upload")
@@ -19,4 +19,4 @@ const endpoint = upload(async (req, res) => {
 
 export const api = firebase.https.onRequest(endpoint)
 
-// module.exports = endpoint
+module.exports = endpoint
