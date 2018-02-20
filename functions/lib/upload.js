@@ -1,20 +1,28 @@
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-if (process.env.NODE_ENV === "production") {
-    admin.initializeApp(functions.config().firebase);
-}
-else {
-    // Dev mode
-    if (!admin.apps.length) {
-        admin.initializeApp({
-            credential: admin.credential.cert(require("../../serviceAccountKey.json")),
-            storageBucket: "mototrax-8fa96.appspot.com"
-        });
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+const { upload } = require("micro-upload");
+module.exports = upload((req, res) => __awaiter(this, void 0, void 0, function* () {
+    const { send } = require("micro");
+    if (!req.files) {
+        return send(res, 400, "no file uploaded");
     }
-}
-module.exports = function uploadImageToStorage(file) {
+    try {
+        const metadata = yield uploadImageToStorage(req.files.file);
+        send(res, 200, metadata[0]);
+    }
+    catch (e) {
+        send(res, 500, e.toString());
+    }
+}));
+function uploadImageToStorage(file) {
+    const storage = require("./firebase").storage();
     console.log("file", file);
-    const storage = admin.storage();
     return new Promise((resolve, reject) => {
         const fileUpload = storage.bucket().file(`${Date.now()}_${file.name}`);
         const blobStream = fileUpload.createWriteStream({
@@ -31,5 +39,5 @@ module.exports = function uploadImageToStorage(file) {
         });
         blobStream.end(file.data);
     });
-};
+}
 //# sourceMappingURL=upload.js.map

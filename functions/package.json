@@ -12,9 +12,11 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+    "expo-server-sdk": "^2.3.3",
     "firebase-admin": "~5.8.1",
     "firebase-functions": "^0.8.1",
     "micro": "^9.1.0",
+    "micro-cors": "^0.1.0",
     "micro-upload": "^1.0.1"
   },
   "devDependencies": {

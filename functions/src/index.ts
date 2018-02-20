@@ -1,22 +1,23 @@
-const firebase = require("firebase-functions")
-const { send, json } = require("micro")
-const { upload, move } = require("micro-upload")
+const { database, https } = require("firebase-functions")
+const cors = require("micro-cors")()
 
-const uploadImageToStorage = require("./upload")
+const firebase = require("./firebase")
+const notifications = require("./notifications")
 
-const endpoint = upload(async (req, res) => {
-  if (!req.files) {
-    return send(res, 400, "no file uploaded")
-  }
+exports.imageUpload = https.onRequest(cors(require("./upload")))
+exports.registerPush = https.onRequest(cors(notifications.register))
+exports.statusUpdate = database
+  .ref("/tracks/{trackId}/feed/{status}")
+  .onWrite(notifications.sendUpdate)
 
-  try {
-    const metadata = await uploadImageToStorage(req.files.file)
-    send(res, 200, metadata[0])
-  } catch (e) {
-    send(res, 500, e.toString())
-  }
-})
+// Update favorites for push notifications
+exports.onFavorite = database
+  .ref("/users/{userId}/favorites/{trackId}")
+  .onWrite(event => {
+    const { trackId, userId } = event.params
 
-export const api = firebase.https.onRequest(endpoint)
-
-module.exports = endpoint
+    return firebase
+      .database()
+      .ref(`/favorites/${trackId}/${userId}`)
+      .set(event.data.val())
+  })

@@ -1,25 +1,23 @@
-const functions = require("firebase-functions")
+const { upload } = require("micro-upload")
 
-const admin = require("firebase-admin")
-
-if (process.env.NODE_ENV === "production") {
-  admin.initializeApp(functions.config().firebase)
-} else {
-  // Dev mode
-  if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.cert(
-        require("../../serviceAccountKey.json")
-      ),
-      storageBucket: "mototrax-8fa96.appspot.com"
-    })
+module.exports = upload(async (req, res) => {
+  const { send } = require("micro")
+  if (!req.files) {
+    return send(res, 400, "no file uploaded")
   }
-}
 
-module.exports = function uploadImageToStorage(file) {
+  try {
+    const metadata = await uploadImageToStorage(req.files.file)
+    send(res, 200, metadata[0])
+  } catch (e) {
+    send(res, 500, e.toString())
+  }
+})
+
+function uploadImageToStorage(file) {
+  const storage = require("./firebase").storage()
   console.log("file", file)
 
-  const storage = admin.storage()
   return new Promise((resolve, reject) => {
     const fileUpload = storage.bucket().file(`${Date.now()}_${file.name}`)
     const blobStream = fileUpload.createWriteStream({
