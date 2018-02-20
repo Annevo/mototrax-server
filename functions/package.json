@@ -1,7 +1,7 @@
 {
   "name": "functions",
   "scripts": {
-    "dev": "micro-dev",
+    "dev": "micro-dev lib/upload.js",
     "lint": "./node_modules/.bin/tslint -p tslint.json",
     "build": "./node_modules/.bin/tsc",
     "serve": "npm run build && firebase serve --only functions",
@@ -12,6 +12,7 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+    "busboy": "^0.2.14",
     "expo-server-sdk": "^2.3.3",
     "firebase-admin": "~5.8.1",
     "firebase-functions": "^0.8.1",

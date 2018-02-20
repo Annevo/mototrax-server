@@ -6,25 +6,48 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const { upload } = require("micro-upload");
-module.exports = upload((req, res) => __awaiter(this, void 0, void 0, function* () {
-    const { send } = require("micro");
-    if (!req.files) {
-        return send(res, 400, "no file uploaded");
+const path = require("path");
+const os = require("os");
+const fs = require("fs");
+const Busboy = require("busboy");
+module.exports = (req, res) => __awaiter(this, void 0, void 0, function* () {
+    if (req.method === "POST" &&
+        req.headers["content-type"].startsWith("multipart/form-data")) {
+        const busboy = new Busboy({ headers: req.headers });
+        let fileBuffer = new Buffer("");
+        req.files = { file: [] };
+        busboy.on("field", (fieldname, value) => {
+            req.body[fieldname] = value;
+        });
+        busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+            file.on("data", data => {
+                fileBuffer = Buffer.concat([fileBuffer, data]);
+            });
+            file.on("end", () => __awaiter(this, void 0, void 0, function* () {
+                try {
+                    const metadata = yield uploadImageToStorage({
+                        fieldname,
+                        originalname: filename,
+                        encoding,
+                        mimetype,
+                        data: fileBuffer
+                    });
+                    res.status(200).send(metadata[0]);
+                }
+                catch (e) {
+                    res.status(500).send(e.toString());
+                }
+            }));
+        });
+        busboy.end(req.rawBody);
+        req.pipe(busboy);
     }
-    try {
-        const metadata = yield uploadImageToStorage(req.files.file);
-        send(res, 200, metadata[0]);
-    }
-    catch (e) {
-        send(res, 500, e.toString());
-    }
-}));
+});
 function uploadImageToStorage(file) {
     const storage = require("./firebase").storage();
     console.log("file", file);
     return new Promise((resolve, reject) => {
-        const fileUpload = storage.bucket().file(`${Date.now()}_${file.name}`);
+        const fileUpload = storage.bucket().file(`${Date.now()}_${file.filename}`);
         const blobStream = fileUpload.createWriteStream({
             metadata: {
                 contentType: file.mimetype

@@ -29,7 +29,7 @@ module.exports.sendUpdate = (event) => __awaiter(this, void 0, void 0, function*
         .once("value")
         .then(snap => {
         const users = snap.val();
-        return Promise.all(Object.keys(users)
+        return Promise.all(Object.keys(users || {})
             .filter(id => users[id]) // Only if favorited is true
             .map(userId => db
             .ref(`users/${userId}/token`)

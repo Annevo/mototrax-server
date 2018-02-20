@@ -27,7 +27,7 @@ module.exports.sendUpdate = async event => {
       const users = snap.val()
 
       return Promise.all(
-        Object.keys(users)
+        Object.keys(users || {})
           .filter(id => users[id]) // Only if favorited is true
           .map(userId =>
             db

@@ -12,8 +12,6 @@ exports.onFavorite = database
     .ref("/users/{userId}/favorites/{trackId}")
     .onWrite(event => {
     const { trackId, userId } = event.params;
-    console.log("state", event.data.val());
-    console.log(trackId, userId);
     return firebase
         .database()
         .ref(`/favorites/${trackId}/${userId}`)

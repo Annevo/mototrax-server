@@ -1,25 +1,53 @@
-const { upload } = require("micro-upload")
+const path = require("path")
+const os = require("os")
+const fs = require("fs")
+const Busboy = require("busboy")
 
-module.exports = upload(async (req, res) => {
-  const { send } = require("micro")
-  if (!req.files) {
-    return send(res, 400, "no file uploaded")
-  }
+module.exports = async (req, res) => {
+  if (
+    req.method === "POST" &&
+    req.headers["content-type"].startsWith("multipart/form-data")
+  ) {
+    const busboy = new Busboy({ headers: req.headers })
+    let fileBuffer = new Buffer("")
+    req.files = { file: [] }
 
-  try {
-    const metadata = await uploadImageToStorage(req.files.file)
-    send(res, 200, metadata[0])
-  } catch (e) {
-    send(res, 500, e.toString())
+    busboy.on("field", (fieldname, value) => {
+      req.body[fieldname] = value
+    })
+
+    busboy.on("file", (fieldname, file, filename, encoding, mimetype) => {
+      file.on("data", data => {
+        fileBuffer = Buffer.concat([fileBuffer, data])
+      })
+
+      file.on("end", async () => {
+        try {
+          const metadata = await uploadImageToStorage({
+            fieldname,
+            originalname: filename,
+            encoding,
+            mimetype,
+            data: fileBuffer
+          })
+          res.status(200).send(metadata[0])
+        } catch (e) {
+          res.status(500).send(e.toString())
+        }
+      })
+    })
+
+    busboy.end(req.rawBody)
+    req.pipe(busboy)
   }
-})
+}
 
 function uploadImageToStorage(file) {
   const storage = require("./firebase").storage()
   console.log("file", file)
 
   return new Promise((resolve, reject) => {
-    const fileUpload = storage.bucket().file(`${Date.now()}_${file.name}`)
+    const fileUpload = storage.bucket().file(`${Date.now()}_${file.filename}`)
     const blobStream = fileUpload.createWriteStream({
       metadata: {
         contentType: file.mimetype
